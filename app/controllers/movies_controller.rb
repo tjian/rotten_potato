@@ -7,18 +7,47 @@ class MoviesController < ApplicationController
   end
 
   def index
+
+    is_redirect = false
+    if params[:sort_by] == nil && session[:sort_by] != nil
+      is_redirect = true
+    else
+      session[:sort_by] = params[:sort_by]
+    end
+
+    if params[:ratings] == nil && session[:ratings] != nil
+      is_redirect = true
+    else
+      session[:ratings] = params[:ratings]
+    end
+
+    if is_redirect
+      flash.keep
+      redirect_to movies_path({:sort_by => session[:sort_by], :ratings => session[:ratings]})
+    end
+
+
     @all_ratings = Movie.ratings
-    @checked_rating = params[:ratings] || {}
     
+    if params[:ratings].is_a?(Hash)
+      @checked_rating = params[:ratings].keys
+    elsif params[:ratings].kind_of?(Array)
+      @checked_rating = params[:ratings]
+    else
+      @checked_rating = @all_ratings
+    end
+
     if params[:sort_by] == 'title'
       order = {:order => :title}
       @title_style = 'hilite'
     end
+
     if params[:sort_by] == 'release_date'
       order = {:order => :release_date}
       @release_style = 'hilite'
     end
-    @movies = Movie.find_all_by_rating(@checked_rating.keys, order)
+
+    @movies = Movie.find_all_by_rating(@checked_rating, order)
   end
 
   def new
